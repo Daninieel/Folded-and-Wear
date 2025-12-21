@@ -1,0 +1,196 @@
+﻿@{
+    ViewData["Title"] = "My Bookings";
+}
+
+<head>
+    <title>FOLDED N' WEAR</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.bundle.min.js" integrity="sha384-pzjw8f+ua7Kw1TIq0v8Fq5uZXx+JhBdA3gKn/fp3pa60CtnQ5ICNBGVY6nC4W3lA" crossorigin="anonymous"></script>
+
+    <style>
+        .container {
+            width: 100%;
+            max-width: 2200px;
+        }
+
+        .table-container {
+            width: 100%;
+            height: 300px;
+            overflow: auto;
+            border: 1px solid #ccc;
+            background-color: white;
+        }
+
+        .table th, .table td {
+            white-space: nowrap;
+            padding: 10px;
+        }
+
+            .table th:nth-child(1), .table td:nth-child(1) {
+                width: 10%;
+            }
+
+            .table th:nth-child(2), .table td:nth-child(2) {
+                width: 15%;
+            }
+
+            .table th:nth-child(3), .table td:nth-child(3) {
+                width: 15%;
+            }
+
+            .table th:nth-child(4), .table td:nth-child(4) {
+                width: 15%;
+            }
+
+            .table th:nth-child(5), .table td:nth-child(5) {
+                width: 10%;
+            }
+
+            .table th:nth-child(6), .table td:nth-child(6) {
+                width: 10%;
+            }
+
+            .table th:nth-child(7), .table td:nth-child(7) {
+                width: 20%;
+            }
+
+            .table th:nth-child(8), .table td:nth-child(8) {
+                width: 15%;
+            }
+    </style>
+</head>
+
+<script>
+    $(document).ready(function () {
+        loadOrders(); 
+        function loadOrders() {
+            $.ajax({
+                url: '@Url.Action("GetOrder", "Customer")',
+                type: 'GET',
+                dataType: 'json',
+                success: function (data) {
+                    var orderTable = $("#orderTable tbody");
+                    orderTable.empty(); 
+                    console.log(data);
+
+                    if (data.error) {
+                        alert("Error: " + data.details);
+                        return;
+                    }
+
+                    if (data.length > 0) {
+                        $.each(data, function (index, order) {
+                            console.log(order);
+
+                            var row = `<tr>
+                                        <td>${order.orderID}</td>
+                                        <td>${order.customerID}</td>
+                                        <td>${new Date(order.dateReceived).toLocaleString()}</td>
+                                        <td>${new Date(order.datePickup).toLocaleString()}</td>
+                                        <td>${order.isRushed ? 'Yes' : 'No'}</td>
+                                        <td>${typeof order.totalAmount === 'number' ? order.totalAmount.toFixed(2) : 'N/A'}</td>
+                                        <td>${order.orderStatus}</td>
+                                        <td><button class="btn btn-danger btn-sm w-100 cancel-btn" data-order-id="${order.orderID}">Cancel</button></td>
+                                      </tr>`;
+                            orderTable.append(row); // Insert each row of data
+                        });
+                    } else {
+                        orderTable.append('<tr><td colspan="8" class="text-center">No orders found.</td></tr>');
+                    }
+                },
+                error: function (xhr, status, error) {
+                    console.error("AJAX Error:", xhr.responseText);
+                    alert("Failed to load order data: " + xhr.responseText);
+                }
+            });
+        }
+
+        // Implement search functionality for orders
+        $("#searchInput").on("keyup", function () {
+            var value = $(this).val().toLowerCase();
+            $("#orderTable tbody tr").filter(function () {
+                $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
+            });
+        });
+
+        // Handle the cancel button click event
+        $(document).on("click", ".cancel-btn", function () {
+            var orderID = $(this).data("order-id");
+            if (confirm("Are you sure you want to cancel this order?")) {
+                cancelOrder(orderID);
+            }
+        });
+
+        // Function to cancel the order
+        function cancelOrder(orderID) {
+            $.ajax({
+                url: '@Url.Action("CancelOrder", "Customer")',
+                type: 'POST',
+                data: { orderID: orderID },
+                success: function (response) {
+                    if (response.success) {
+                        alert("Order canceled successfully.");
+                        loadOrders();
+                    } else {
+                        alert("Failed to cancel order: " + response.error);
+                    }
+                },
+                error: function (xhr, status, error) {
+                    console.error("AJAX Error:", xhr.responseText);
+                    alert("Failed to cancel the order: " + xhr.responseText);
+                }
+            });
+        }
+
+        // Refresh orders every 10 seconds
+        setInterval(loadOrders, 10000);
+    });
+</script>
+
+<body>
+    <div class="container mt-4">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h2 class="mb-0">Your Orders</h2>
+            </div>
+            <div class="card-body">
+                <p class="lead">See your orders here!</p>
+
+                <div class="row mt-4">
+                    <div class="col-md-12">
+                        <div class="card text-center border-primary">
+                            <div class="card-body">
+                                <h5 class="card-title">Order List</h5>
+                                <p class="card-text">View your orders.</p>
+
+                                <input type="text" id="searchInput" class="form-control mb-3" placeholder="Search orders...">
+
+                                <div class="table-container">
+                                    <table id="orderTable" class="table table-bordered table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>Order ID</th>
+                                                <th>Customer ID</th>
+                                                <th>Receive Date</th>
+                                                <th>Pickup Date</th>
+                                                <th>Is Rushed</th>
+                                                <th>Total Amount</th>
+                                                <th>Order Status</th>
+                                                <th>Action</th> 
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>

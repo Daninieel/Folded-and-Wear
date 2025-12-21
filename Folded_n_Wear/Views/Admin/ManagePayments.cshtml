@@ -1,0 +1,220 @@
+﻿@{
+    ViewData["Title"] = "Manage Payments";
+}
+
+<head>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+
+
+    <style>
+        .table-container {
+            width: 100%; 
+            height: 250px; 
+            overflow: auto;
+            border: 1px solid #ccc;
+            background-color: white;
+        }
+
+        .table th, .table td {
+            white-space: nowrap; 
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #ccc;
+            border-top: 2px solid #007bff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+    </style>
+</head>
+
+<script>
+    $(document).ready(function () {
+        let paymentsData = [];
+
+        function loadPayments() {
+            $.ajax({
+                url: '@Url.Action("GetPayments", "Customer")',
+                type: 'GET',
+                dataType: 'json',
+                success: function (data) {
+                    paymentsData = data;
+                    console.log(paymentsData); 
+                    filterPayments();
+                },
+                error: function (xhr) {
+                    console.error("AJAX Error:", xhr.responseText);
+                    alert("Failed to load payment data: " + xhr.responseText);
+                }
+            });
+        }
+
+        function filterPayments() {
+            let filteredData = [...paymentsData];
+            let searchValue = $("#searchInput").val().toLowerCase();
+            if (searchValue) {
+                filteredData = filteredData.filter(payment =>
+                    Object.values(payment).some(val => val.toString().toLowerCase().includes(searchValue))
+                );
+            }
+            let filterPaid = $('#filterPaid').prop('checked');
+            let filterPending = $('#filterPending').prop('checked');
+
+            if (filterPaid && !filterPending) {
+                filteredData = filteredData.filter(payment => payment.paymentStatus === "Paid");
+            } else if (!filterPaid && filterPending) {
+                filteredData = filteredData.filter(payment => payment.paymentStatus === "Pending");
+            }
+
+            renderPayments(filteredData);
+        }
+
+        function renderPayments(data) {
+            var paymentTable = $("#paymentTable tbody");
+            paymentTable.empty();
+
+            if (data.length > 0) {
+                $.each(data, function (index, payment) {
+                    var statusButton = `<button class="btn btn-${payment.paymentStatus === 'Pending' ? 'warning' : 'success'} btn-sm change-status" data-payment-id="${payment.paymentID}" style="width:100%">${payment.paymentStatus}</button>`;
+
+                    var row = `<tr>
+                        <td>${payment.paymentID}</td>
+                        <td>${payment.customerID}</td>
+                        <td>${payment.orderID}</td>
+                        <td>${payment.balance}</td>
+                        <td>${statusButton}</td>
+                        <td>${new Date(payment.paymentDate).toISOString().split('T')[0]}</td>
+                        <td><button class="btn btn-danger delete-payment" data-payment-id="${payment.paymentID}" style="width:100%">Delete</button></td>
+                    </tr>`;
+                    paymentTable.append(row);
+                });
+            } else {
+                paymentTable.append('<tr><td colspan="7" class="text-center">No payments found.</td></tr>');
+            }
+        }
+
+        $(document).on("click", ".delete-payment", function () {
+            let paymentID = $(this).data("payment-id");
+
+            if (!confirm("Are you sure you want to delete this payment?")) {
+                return;
+            }
+
+            $.ajax({
+                url: '@Url.Action("DeleteConfirms", "Admin")',
+                type: 'POST',
+                data: { id: paymentID },
+                success: function (response) {
+                    if (response.success) {
+                        alert("Payment deleted successfully.");
+                        $('button[data-payment-id="' + paymentID + '"]').closest('tr').remove();
+                    } else {
+                        alert('Failed to delete payment: ' + response.message);
+                    }
+                },
+                error: function (xhr) {
+                    console.error("AJAX Error:", xhr.responseText);
+                    alert("Error deleting payment.");
+                }
+            });
+        });
+
+        function updatePaymentStatus(paymentID, newStatus) {
+            $.ajax({
+                url: '@Url.Action("UpdatePaymentStatus", "Admin")',
+                type: 'POST',
+                data: {
+                    paymentId: paymentID, 
+                    newStatus: newStatus
+                },
+                success: function (response) {
+                    if (response.success) {
+                        // Update button UI after successful status change
+                        console.log(response.newStatus);
+                        $('button[data-payment-id="' + paymentID + '"]').text(response.newStatus);
+                        $('button[data-payment-id="' + paymentID + '"]').removeClass('btn-warning btn-success')
+                            .addClass(response.newStatus === 'Paid' ? 'btn-success' : 'btn-warning');
+                    } else {
+                        alert('Failed to update status: ' + response.message);
+                    }
+                },
+                error: function (xhr) {
+                    console.error("AJAX Error:", xhr.responseText);
+                    alert("Error updating payment status.");
+                }
+            });
+        }
+
+        $(document).on('click', '.change-status', function () {
+            var paymentID = $(this).data('payment-id');
+            var newStatus = $(this).text() === 'Pending' ? 'Paid' : 'Pending';  // Toggle status between Paid and Pending
+            updatePaymentStatus(paymentID, newStatus);
+        });
+
+        $('#searchInput, #filterPaid, #filterPending').on('input change', filterPayments);
+
+        loadPayments();
+        setInterval(loadPayments, 10000);
+    });
+
+</script>
+
+<body>
+    <div class="container mt-4">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h2 class="mb-0">Payments Dashboard</h2>
+            </div>
+            <div class="card-body">
+                <p class="lead">Welcome, Admin! Manage payment records here.</p>
+
+                <div class="row mt-4">
+                    <div class="col-md-12">
+                        <div class="card text-center border-primary">
+                            <div class="card-body">
+                                <h5 class="card-title">Payment List</h5>
+                                <p class="card-text">View all payment records.</p>
+
+                                <input type="text" id="searchInput" class="form-control mb-3" placeholder="Search payments...">
+
+                                <div class="mb-3">
+                                    <label><input type="checkbox" id="filterPaid"> Paid</label>
+                                    <label class="ml-3"><input type="checkbox" id="filterPending"> Pending</label>
+                                </div>
+
+                                <div class="table-container">
+                                    <table id="paymentTable" class="table table-bordered table-striped">
+                                        <thead class="thead-dark">
+                                            <tr>
+                                                <th>Payment ID</th>
+                                                <th>Customer ID</th>
+                                                <th>Order ID</th>
+                                                <th>Total Amount</th>
+                                                <th>Payment Status</th>
+                                                <th>Payment Date</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4 text-center">
+                    <a href="@Url.Action("Logout", "Account")" class="btn btn-secondary">Logout</a>
+                    <a href="@Url.Action("CreatePayment", "Admin")" class="btn btn-secondary">Create</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>

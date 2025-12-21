@@ -1,0 +1,162 @@
+﻿@model Folded_n_Wear.Models.PaymentData
+
+@{
+    ViewData["Title"] = "Create Payment";
+}
+
+<head>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <style>
+        .form-actions {
+            margin-top: 2rem;
+            padding-bottom: 1rem;
+        }
+            .form-actions .btn {
+                padding: 0.6rem 2rem; 
+                font-size: 1rem;
+                line-height: 1.5;
+                border-radius: 0; 
+                width: auto; 
+                min-width: 120px;
+                display: inline-block; 
+                margin: 0 5px;
+                text-align: center;
+                border: 1px solid transparent;
+                transition: all 0.3s ease;
+            }
+        .button-container {
+            display: flex;
+            justify-content: center;
+            gap: 15px; 
+            flex-wrap: wrap;
+        }
+        .btn-cancel {
+            order: 1;
+        }
+
+        .btn-submit {
+            order: 2;
+        }
+
+        .btn-primary:hover {
+            background-color: #0069d9;
+            border-color: #0062cc;
+            transform: translateY(-2px);
+        }
+
+        .btn-danger:hover {
+            background-color: #c82333;
+            border-color: #bd2130;
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+
+<div class="container mt-5">
+    <div class="row" style="color:white">
+        <div class="col-md-8 mx-auto rounded p-3">
+            <h2 class="text-center mb-5">Create Payment</h2>
+
+            <form asp-controller="Admin" asp-action="CreatePayment" method="post">
+                <div class="form-group">
+                    <label asp-for="OrderID">Order ID</label>
+                    <select asp-for="OrderID" class="form-control" asp-items="ViewBag.OrderList" id="OrderID" onchange="updateCustomerAndBalance()">
+                        <option value="">Select Order</option>
+                    </select>
+                    <div class="text-danger"><span asp-validation-for="OrderID"></span></div>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="CustomerID">Customer ID</label>
+                    <input asp-for="CustomerID" class="form-control" readonly />
+                    <div class="text-danger"><span asp-validation-for="CustomerID"></span></div>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="balance">Balance</label>
+                    <input asp-for="balance" class="form-control" readonly />
+                    <div class="text-danger"><span asp-validation-for="balance"></span></div>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="PaymentStatus">Payment Status</label>
+                    <select asp-for="PaymentStatus" class="form-control">
+                        <option value="Pending">Pending</option>
+                        <option value="Paid">Paid</option>
+                    </select>
+                    <div class="text-danger"><span asp-validation-for="PaymentStatus"></span></div>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="PaymentDate">Payment Date</label>
+                    <input asp-for="PaymentDate" class="form-control" type="datetime-local" />
+                    <div class="text-danger"><span asp-validation-for="PaymentDate"></span></div>
+                </div>
+
+                <div class="form-actions">
+                    <div class="button-container">
+                        <a class="btn btn-danger btn-cancel" asp-controller="Admin" asp-action="ManagePayments" role="button">Cancel</a>
+                        <button type="submit" class="btn btn-primary btn-submit">Submit</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    function updateCustomerAndBalance() {
+        var orderID = $("#OrderID").val();
+
+        if (orderID) {
+            $.ajax({
+                url: '@Url.Action("GetOrderDetails", "Admin")',
+                type: 'GET',
+                data: { orderID: orderID },
+                success: function (data) {
+                    console.log(data);
+                    console.log("Balance: " + data.balance);
+                    $("#CustomerID").val(data.customerID);
+                    $("#Balance").val(data.balance);
+                },
+                error: function () {
+                    console.log('Error fetching order details.');
+                }
+            });
+        } else {
+            $("#CustomerID").val('');
+            $("#Balance").val('');
+        }
+    }
+
+    $(document).ready(function () {
+        $("#OrderID").change(function () {
+            var orderID = $(this).val();
+
+            if (orderID) {
+                $.ajax({
+                    url: '/Admin/GetOrderDetails',
+                    type: 'GET',
+                    data: { orderID: orderID },
+                    success: function (data) {
+                        if (data) {
+                            $("#CustomerID").val(data.customerID);
+                            $("#balance").val(data.balance);
+                        } else {
+                            $("#CustomerID").val("");
+                            $("#balance").val("");
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        console.error("AJAX Error: " + status + ": " + error);
+                    }
+                });
+            } else {
+                $("#CustomerID").val("");
+                $("#balance").val("");
+            }
+        });
+    });
+</script>

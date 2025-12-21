@@ -1,0 +1,44 @@
+﻿@{
+    ViewData["Title"] = "FOLDED N' WEAR Register";
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>FOLDED N' WEAR</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="~/css/register.css" asp-append-version="true" />
+</head>
+
+<body class="background">
+    <div class="text-center">
+        <h1>Book Now</h1>
+    </div>
+
+    <div class="brand-header">
+        <h1 class="brand-header">ABOUT US</h1>
+    </div>
+
+    <div class="brand-paragraph">
+        <p>At Folded n' Wear, we get it—laundry is the last thing you wanna deal with.</p>
+    </div>
+
+
+    <div class="form-container">
+        <form action="/register/submit" method="post">
+            <label for="name">Name:</label>
+            <input type="text" id="name" name="name" placeholder="Enter your name" required>
+
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email" placeholder="Enter your email" required>
+
+            <label for="phone">Phone Number:</label>
+            <input type="tel" id="phone" name="phone" placeholder="Enter your phone number" required>
+
+
+            <button type="submit">Submit</button>
+        </form>
+    </div>
+
+</body>
+</html>

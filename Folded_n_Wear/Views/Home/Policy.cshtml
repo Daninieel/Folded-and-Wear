@@ -1,0 +1,123 @@
+﻿@{
+    ViewData["Title"] = "Policies";
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>FOLDED N' WEAR - Policies</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <style>
+        html, body {
+            height: 100%;
+            overflow: auto;
+            color: white;
+        }
+
+        .services-page-background {
+            background-color: #07518e;
+            padding: 20px 0;
+            min-height: 100%;
+            margin-top: 80px;
+        }
+
+        .hero-section {
+            position: relative;
+            overflow: hidden;
+            height: 200px;
+            margin-top: 20px;
+        }
+
+        .hero-image {
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .service-card {
+            background-color: #05487d;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            text-align: center;
+            transition: transform 0.3s, box-shadow 0.3s;
+            margin-bottom: 20px;
+        }
+
+            .service-card:hover {
+                transform: translateY(-10px);
+                box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+            }
+
+            .service-card h3 {
+                font-size: 1.5rem;
+                font-weight: bold;
+                margin-bottom: 15px;
+                color: white;
+            }
+
+            .service-card p, .service-card li {
+                font-size: 1rem;
+                color: white;
+                text-align: left;
+            }
+
+        @@media (min-width: 768px) {
+            .services-page-background {
+                margin-top: 120px;
+                padding: 50px 0;
+            }
+
+            .hero-section {
+                height: 300px;
+                margin-top: 50px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="services-page-background">
+        <div class="container-fluid px-0">
+            <h1 class="text-center mb-4">Our Policies</h1>
+
+            <div class="hero-section mb-3 mb-md-5">
+                <img src="https://images.pexels.com/photos/2112648/pexels-photo-2112648.jpeg" alt="Laundry Policies" class="img-fluid w-100 hero-image" />
+            </div>
+
+            <div class="container">
+                <div class="row">
+                    <div class="col-12 col-md-12 mb-4">
+                        <div class="service-card">
+                            <h3>Terms & Conditions</h3>
+                            <ol>
+                                <li>By availing of our laundry services, customers agree to comply with these terms and conditions.</li>
+                                <li>We provide washing, drying, folding, and as requested. Special requests (e.g., delicate fabrics) must be clearly communicated at the time of service.</li>
+                                <li>Customers must ensure that all items provided are safe for laundry processing. We are not responsible for damages caused by defective materials, pre-existing conditions (e.g., weak fabric, fading), or failure to follow care labels.</li>
+                                <li>We take utmost care in handling items. However, our liability for lost or damaged items is limited to 10 times the service fee for the specific item.</li>
+                                <li>Full payment is required upon collection of items unless partial payment has been agreed upon.</li>
+                                <li>Cancellations must be made at least 24 hours in advance. Refunds are provided only for services not rendered due to errors on our part.</li>
+                                <li>All personal data provided will be used solely for service delivery and customer communication.</li>
+                            </ol>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-12 mb-4">
+                        <div class="service-card">
+                            <h3>Rules & Regulations</h3>
+                            <ol>
+                                <li>Business hours are from Monday to Saturday, 8:00 AM to 7:00 PM. Items received after 6:00 PM will be processed the next business day.</li>
+                                <li>Customers are advised to separate colored and white clothing. Check pockets before handing over items; we are not responsible for lost or damaged valuables.</li>
+                                <li>Items will be inspected before and after laundering. Damages found during processing will be reported immediately. We reserve the right to refuse items that pose a health or safety risk.</li>
+                                <li>Express services are available upon request and are subject to additional charges.</li>
+                                <li>Customers are expected to treat staff with respect. Disruptive behavior may result in refusal of service.</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

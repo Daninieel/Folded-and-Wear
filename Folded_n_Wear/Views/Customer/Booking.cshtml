@@ -1,0 +1,337 @@
+﻿@{
+    ViewData["Title"] = "Booking";
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>FOLDED N' WEAR - Booking</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <style>
+        .container.mt-5 {
+            max-height: 70vh;
+            overflow-y: auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h2 class="text-center" style="font-family:'Franklin Gothic Medium', sans-serif; color: White">
+        Book a Laundry Service
+    </h2>
+
+    <div class="container mt-5">
+
+        <form asp-controller="Customer" asp-action="OrderSummary" method="post" class="p-4 shadow-lg rounded bg-white">
+
+            <div class="form-group">
+                <label for="orderId">Order ID:</label>
+                <input type="text" class="form-control" id="orderId" name="OrderID" readonly>
+            </div>
+
+            <div class="form-group">
+                <label for="customerId">Customer ID:</label>
+                <input type="number" class="form-control" id="customerId" name="CustomerID"
+                       value="@Context.Session.GetInt32("CustomerID")" readonly>
+            </div>
+
+            <div class="form-group">
+                <label for="dateReceived">Date Given:</label>
+                <input type="datetime-local" class="form-control" id="dateReceived" name="DateReceived" required>
+            </div>
+
+            <div class="form-group">
+                <label for="datePickup">Date Pickup:</label>
+                <input type="datetime-local" class="form-control" id="datePickup" name="DatePickup" required>
+            </div>
+
+            <div class="form-group">
+                <label for="isRushed">Rush Service:</label>
+                <select class="form-control" id="isRushed" name="IsRushed">
+                    <option value="No">No</option>
+                    <option value="Yes">Yes</option>
+                </select>
+            </div>
+
+            <h4 class="mt-4">Items</h4>
+            <div id="itemsContainer">
+                <div class="item-group d-flex align-items-center mb-2">
+                    <label class="mr-2">Item Type:</label>
+                    <select class="form-control w-50 itemType" name="Items[0].ItemTypeID" required>
+                        <option value="">Select Item</option>
+                        <option value="1">Regular Clothes (₱28.00/kilo)</option>
+                        <option value="2">Blanket, Towels, Linen (₱40.00/kilo)</option>
+                        <option value="3">Comforter, Heavy Towels, Stuffed Toys (₱65.00/kilo)</option>
+                    </select>
+                    <label class="ml-3 mr-2">Quantity (kilos):</label>
+                    <input type="number" class="form-control w-25 quantity" name="Items[0].Quantity" min="1" max="10" required>
+                    <input type="hidden" id="totalKilosHidden" name="Quantity">
+                    <button type="button" class="btn btn-danger ml-3 remove-item">X</button>
+                </div>
+            </div>
+
+            <button type="button" id="addItem" class="btn btn-secondary mt-3">Add More Items</button>
+
+            <div class="form-group mt-3">
+                <label>Total Kilos (kg):</label>
+                <input type="text" class="form-control" id="totalKilos" name="TotalKilos" readonly>
+            </div>
+
+            <div class="form-group mt-3">
+                <label>Total Amount (₱):</label>
+                <input type="text" class="form-control" id="totalAmount" name="TotalAmount" readonly>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block mt-3">Confirm Booking</button>
+        </form>
+    </div>
+    <br />
+
+    @if (TempData["AlertMessage"] != null)
+    {
+        <div class="alert alert-success">
+            @TempData["AlertMessage"]
+        </div>
+    }
+    <script>
+        const priceRates = {
+            1: 28.00,
+            2: 40.00,
+            3: 65.00
+        };
+
+        function generateOrderID() {
+            const date = new Date();
+            const formattedDate = date.toISOString().slice(0, 10).replace(/-/g, "");
+            const randomNum = Math.floor(100 + Math.random() * 900);
+            return `ORD-${formattedDate}-${randomNum}`;
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            document.getElementById("orderId").value = generateOrderID();
+
+            let today = new Date();
+            let minDateTime = today.toISOString().slice(0, 16);
+
+            let dateReceivedInput = document.getElementById("dateReceived");
+            let datePickupInput = document.getElementById("datePickup");
+            let rushServiceInput = document.getElementById("isRushed");
+            let form = document.querySelector("form");
+
+            dateReceivedInput.setAttribute("min", minDateTime);
+            datePickupInput.readOnly = true;
+
+            let isBookingValid = true;
+
+            function updatePickupDate() {
+                if (dateReceivedInput.value) {
+                    let receivedDate = new Date(dateReceivedInput.value);
+                    let isRushed = rushServiceInput.value === "Yes";
+                    let extraDays = isRushed ? 1 : 2; 
+
+                    let totalKilos = parseFloat(document.getElementById("totalKilos").value) || 0;
+                    if (totalKilos > 5) {
+                        extraDays += 1;
+                    }
+
+                    receivedDate.setDate(receivedDate.getDate() + extraDays);
+                    datePickupInput.value = receivedDate.toISOString().slice(0, 16);
+                }
+            }
+
+            function checkMaxKilosForPickup() {
+                let pickupDate = document.getElementById("datePickup").value;
+                if (!pickupDate) return;
+
+                let totalKilos = parseFloat(document.getElementById("totalKilos").value) || 0;
+                $.ajax({
+                    url: `/Customer/GetTotalKilosForDate?pickupDate=${pickupDate}`,
+                    type: "GET",
+                    dataType: "json",
+                    success: function (response) {
+                        let bookedKilos = response.totalKilos || 0;
+                        let newTotal = bookedKilos + totalKilos;
+
+                        // For rushed bookings, check the next day's kilos
+                        if (rushServiceInput.value === "Yes") {
+                            let rushedPickupDate = new Date(pickupDate);
+                            rushedPickupDate.setDate(rushedPickupDate.getDate() + 1); // Add 1 day for rushed bookings
+
+                            // Check if the new pickup date exceeds the kilo limit
+                            $.ajax({
+                                url: `/Customer/GetTotalKilosForDate?pickupDate=${rushedPickupDate.toISOString().slice(0, 10)}`,
+                                type: "GET",
+                                dataType: "json",
+                                success: function (response) {
+                                    let bookedKilosNextDay = response.totalKilos || 0;
+                                    let newTotalNextDay = bookedKilosNextDay + totalKilos;
+
+                                    if (newTotalNextDay > 10) {
+                                        alert(`The rushed pickup date for ${rushedPickupDate.toISOString().slice(0, 10)} exceeds the maximum weight limit of 10 kilos.`);
+                                        document.getElementById("datePickup").value = "";
+                                        isBookingValid = false; // Mark as invalid due to overbooking
+                                    } else {
+                                        isBookingValid = true;
+                                    }
+                                },
+                                error: function () {
+                                    console.error("Failed to fetch total kilos for the next day's pickup date.");
+                                    isBookingValid = false;
+                                }
+                            });
+                        } else if (newTotal > 10) {
+                            alert(`The selected pickup date (${pickupDate}) already exceeds the maximum limit of 10 kilos.`);
+                            document.getElementById("datePickup").value = ""; 
+                            isBookingValid = false;
+                        } else {
+                            isBookingValid = true; 
+                        }
+                    },
+                    error: function () {
+                        console.error("Failed to fetch total kilos for the selected pickup date.");
+                        isBookingValid = false; 
+                    }
+                });
+            }
+
+            function checkForBookingConflicts() {
+                let selectedDate = new Date(datePickupInput.value);
+                let isRushed = rushServiceInput.value === "Yes";
+
+                // If rushed, adjust by adding one day (pickup should be the next day)
+                if (isRushed) {
+                    selectedDate.setDate(selectedDate.getDate() + 1); // Rushed service, pick up 1 day later
+                }
+
+                // Check if this selected date conflicts with already booked dates
+                $.ajax({
+                    url: `/Customer/GetTotalKilosForDate?pickupDate=${selectedDate.toISOString().slice(0, 10)}`,
+                    type: "GET",
+                    dataType: "json",
+                    success: function (response) {
+                        let bookedKilos = response.totalKilos || 0;
+                        let currentOrderKilos = parseFloat(document.getElementById("totalKilos").value) || 0;
+                        let newTotal = bookedKilos + currentOrderKilos;
+
+                        // Disable this date if it would result in overbooking
+                        if (newTotal > 10) {
+                            alert(`The selected pickup date (${selectedDate.toISOString().slice(0, 10)}) is fully booked.`);
+                            datePickupInput.value = "";
+                            isBookingValid = false; // Invalid booking due to overbooking
+                        } else {
+                            isBookingValid = true; 
+                        }
+                    },
+                    error: function () {
+                        console.error("Error checking for booking conflicts.");
+                        isBookingValid = false;
+                    }
+                });
+            }
+
+            function disablePastDates() {
+                let pickupDateInput = document.getElementById("datePickup");
+                let pickupDate = new Date(pickupDateInput.value);
+                let minDate = new Date();
+                pickupDateInput.setAttribute("min", minDate.toISOString().slice(0, 16));
+            }
+
+            function calculateTotal() {
+                let totalAmount = 0;
+                let totalKilos = 0;
+
+                document.querySelectorAll(".item-group").forEach((itemGroup) => {
+                    let itemType = itemGroup.querySelector(".itemType").value;
+                    let quantity = itemGroup.querySelector(".quantity").value;
+
+                    if (priceRates[itemType] && quantity) {
+                        let kilos = parseFloat(quantity);
+                        totalKilos += kilos;
+                        totalAmount += priceRates[itemType] * kilos;
+                    }
+                });
+
+                if (totalKilos > 10) {
+                    alert("You cannot exceed the maximum limit of 10 kilos.");
+                    totalKilos = 10;
+                }
+
+                let isRushed = document.getElementById("isRushed").value === "Yes";
+                if (isRushed) {
+                    totalAmount *= 2;
+                }
+
+                document.getElementById("totalKilos").value = totalKilos.toFixed(2);
+                document.getElementById("totalAmount").value = totalAmount.toFixed(2);
+                document.getElementById("totalKilosHidden").value = totalKilos;
+
+                updatePickupDate();  // Ensure the pickup date updates after calculating the total
+                checkMaxKilosForPickup();  // Check for pickup date conflicts
+            }
+
+            // Prevent form submission if the booking is invalid
+            form.addEventListener("submit", function (e) {
+                if (!isBookingValid) {
+                    e.preventDefault();
+                    alert("Booking is not valid. Please fix the issues before proceeding.");
+                }
+            });
+
+            document.addEventListener("input", function (e) {
+                if (e.target.classList.contains("quantity")) {
+                    calculateTotal();
+                }
+            });
+
+            document.getElementById("datePickup").addEventListener("change", checkForBookingConflicts);
+            rushServiceInput.addEventListener("change", function () {
+                updatePickupDate();  
+                checkForBookingConflicts(); 
+            });
+
+            document.addEventListener("change", function (e) {
+                if (e.target.classList.contains("itemType") || e.target.classList.contains("quantity") || e.target.id === "isRushed") {
+                    calculateTotal();
+                }
+            });
+
+            // Functionality for Add More Items button
+            document.getElementById("addItem").addEventListener("click", function () {
+                let itemsContainer = document.getElementById("itemsContainer");
+                let newItem = document.querySelector(".item-group").cloneNode(true);
+                let itemIndex = itemsContainer.children.length;
+
+                newItem.querySelector(".quantity").value = "";
+                newItem.querySelector(".itemType").selectedIndex = 0;
+                newItem.querySelector(".itemType").name = `Items[${itemIndex}].ItemTypeID`;
+                newItem.querySelector(".quantity").name = `Items[${itemIndex}].Quantity`;
+
+                newItem.querySelector(".remove-item").addEventListener("click", function () {
+                    if (itemsContainer.children.length > 1) {
+                        newItem.remove();
+                        calculateTotal();
+                    }
+                });
+
+                itemsContainer.appendChild(newItem);
+            });
+
+            document.addEventListener("click", function (e) {
+                if (e.target.classList.contains("remove-item")) {
+                    let itemsContainer = document.getElementById("itemsContainer");
+                    if (itemsContainer.children.length > 1) {
+                        e.target.parentElement.remove();
+                        calculateTotal();
+                    }
+                }
+            });
+        });
+    </script>
+
+
+</body>
+</html>

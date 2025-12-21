@@ -1,0 +1,47 @@
+﻿@{
+    ViewData["Title"] = "FOLDED N' WEAR Register";
+}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>FOLDED N' WEAR</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="~/css/register.css" asp-append-version="true" />
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+</head>
+
+<body class="background">
+    <div class="row no-gutters">
+        <div class="col-sm-6 brand-content">
+            <div class="brand-header">
+                <h1>FOLDED N' WEAR</h1>
+            </div>
+            <div class="brand-paragraph">
+                <p>At Folded n' Wear, <b>we get it</b>—laundry is the <u>last thing</u> you wanna deal with.</p>
+            </div>
+            <div class="text-center mobile-footer">
+                <p>Book now - and let us wash your worries away!</p>
+            </div>
+        </div>
+
+        <div class="col-sm-6">
+            <div class="form-container">
+                <form asp-action="Register" method="post">
+                    <input type="text" id="custName" name="custName" placeholder="Enter your name" required>
+                    <input type="email" id="email" name="email" placeholder="Enter your email" required>
+                    <input type="tel" id="contactNo" name="contactNo" placeholder="Enter your phone number" required>
+                    <input type="text" id="address" name="address" placeholder="Enter your address" required>
+                    <input type="password" id="password" name="password" placeholder="Enter your password" required>
+                    <button type="submit">Register</button>
+                </form>
+            </div>
+            <div class="text-center desktop-footer">
+                <p>Book now - and let us wash your worries away!</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

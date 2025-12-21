@@ -1,0 +1,38 @@
+﻿@model Folded_n_Wear.Models.OrderSummaryViewModel
+@{
+    ViewData["Title"] = "Order Summary";
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Summary</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container mt-5">
+        <h2 class="text-center" style="color:white">Order Summary</h2>
+        <div class="p-4 shadow-lg rounded bg-white">
+            <p><strong>Order ID:</strong> @Model.OrderID</p>
+            <p><strong>Customer ID:</strong> @Model.CustomerID</p>
+            <p><strong>Date Received:</strong> @Model.DateReceived.ToString("MM/dd/yyyy HH:mm")</p>
+            <p><strong>Date Pickup:</strong> @Model.DatePickup.ToString("MM/dd/yyyy HH:mm")</p>
+            <p><strong>Total Amount:</strong> ₱@Model.TotalAmount.ToString("F2")</p>
+            <p><strong>Rushed Wash:</strong> @(Model.IsRushed.ToString())</p>
+
+            <div class="d-grid gap-2">
+                <!-- Print Receipt button -->
+                <button onclick="window.print()" class="btn btn-secondary">Print Receipt</button>
+
+                <!-- Back to Home button -->
+                <a asp-controller="Home" asp-action="HomePage" class="btn btn-primary">Back to Home</a>
+
+                <!-- Back to Booking button -->
+                <a asp-controller="Customer" asp-action="Booking" class="btn btn-info">Back to Booking</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,140 @@
+﻿@{
+    ViewData["Title"] = "Payments";
+}
+
+<head>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+
+    <style>
+        .table-container {
+            width: 100%;
+            height: 250px; 
+            overflow: auto;
+            border: 1px solid #ccc;
+            background-color: white;
+        }
+
+        .table th, .table td {
+            white-space: nowrap;
+        }
+    </style>
+</head>
+
+<script>
+    $(document).ready(function () {
+        loadPayments();
+
+        function loadPayments() {
+            $.ajax({
+                url: '@Url.Action("GetPayment", "Customer")',
+                type: 'GET',
+                dataType: 'json',
+                success: function (data) {
+                    var paymentTable = $("#paymentTable tbody");
+                    paymentTable.empty(); 
+
+                    if (data.length > 0) {
+                        $.each(data, function (index, payment) {
+                            var row = `<tr>
+                                <td>${payment.paymentID}</td>
+                                <td>${payment.customerID}</td>
+                                <td>${payment.orderID}</td>
+                                <td>${payment.balance}</td>
+                                <td>${payment.paymentStatus}</td>
+                                <td>${new Date(payment.paymentDate).toISOString().split('T')[0]}</td>
+                            </tr>`;
+                            paymentTable.append(row);
+                        });
+                    } else {
+                        paymentTable.append('<tr><td colspan="7" class="text-center">No payments found.</td></tr>');
+                    }
+                },
+                error: function (xhr, status, error) {
+                    console.error("AJAX Error:", xhr.responseText);
+                    alert("Failed to load payment data: " + xhr.responseText);
+                }
+            });
+        }
+
+        // Delete payment function
+        window.deletePayment = function (paymentId) {
+            if (confirm("Are you sure you want to delete this payment?")) {
+                $.ajax({
+                    url: '@Url.Action("DeletePayment", "Admin")',
+                    type: 'POST',
+                    data: { id: paymentId },
+                    success: function () {
+                        alert("Payment deleted successfully.");
+                        loadPayments();
+                    },
+                    error: function (xhr, status, error) {
+                        console.error("AJAX Error:", xhr.responseText);
+                        alert("Failed to delete payment: " + xhr.responseText);
+                    }
+                });
+            }
+        };
+
+        // Search functionality
+        $("#searchInput").on("keyup", function () {
+            var value = $(this).val().toLowerCase();
+            $("#paymentTable tbody tr").filter(function () {
+                $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
+            });
+        });
+
+        // Automatically refresh payments every 10 seconds
+        setInterval(loadPayments, 10000); 
+    });
+
+</script>
+
+<body>
+    <div class="container mt-4">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h2 class="mb-0">Payments Dashboard</h2>
+            </div>
+            <div class="card-body">
+                <p class="lead">Welcome! Here are your payment records.</p>
+
+                <div class="row mt-4">
+                    <div class="col-md-12">
+                        <div class="card text-center border-primary">
+                            <div class="card-body">
+                                <h5 class="card-title">Payment List</h5>
+                                <p class="card-text">View all payment records.</p>
+
+                                <input type="text" id="searchInput" class="form-control mb-3" placeholder="Search payments...">
+
+                                <div class="table-container">
+                                    <table id="paymentTable" class="table table-bordered table-striped">
+                                        <thead class="thead-dark">
+                                            <tr>
+                                                <th>Payment ID</th>
+                                                <th>Customer ID</th>
+                                                <th>Order ID</th>
+                                                <th>Total Amount</th>
+                                                <th>Payment Status </th>
+                                                <th>Payment Date</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4 text-center">
+                    <a href="@Url.Action("Logout", "Account")" class="btn btn-secondary">Logout</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>

@@ -1,0 +1,23 @@
+﻿@model Folded_n_Wear.Models.AdminData
+
+@{
+    ViewData["Title"] = "Delete Customer";
+}
+
+<div class="container mt-4">
+    <div class="card shadow-sm">
+        <div class="card-header bg-danger text-white">
+            <h2 class="mb-0">Delete Customer</h2>
+        </div>
+        <div class="card-body text-center">
+            <p class="lead">Are you sure you want to delete <strong>@Model.custName</strong>?</p>
+
+            <form asp-controller="Admin" asp-action="DeleteConfirmed" method="post">
+                <input type="hidden" asp-for="customerID" />
+
+                <button type="submit" class="btn btn-danger">Yes, Delete</button>
+                <a asp-action="Admin" class="btn btn-secondary">Cancel</a>
+            </form>
+        </div>
+    </div>
+</div>

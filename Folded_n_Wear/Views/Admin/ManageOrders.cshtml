@@ -1,0 +1,273 @@
+﻿@{
+    ViewData["Title"] = "Manage Orders";
+}
+
+<head>
+
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+
+
+    <style>
+        .container {
+            width: 100%;
+            max-width: 2200px;
+        }
+
+        .table-container {
+            width: 100%;
+            height: 300px;
+            overflow: auto;
+            border: 1px solid #ccc;
+            background-color: white;
+        }
+
+        .table th, .table td {
+            white-space: nowrap;
+            padding: 10px;
+        }
+
+            .table th:nth-child(1), .table td:nth-child(1) {
+                width: 10%;
+            }
+
+            .table th:nth-child(2), .table td:nth-child(2) {
+                width: 15%;
+            }
+
+            .table th:nth-child(3), .table td:nth-child(3) {
+                width: 15%;
+            }
+
+            .table th:nth-child(4), .table td:nth-child(4) {
+                width: 15%;
+            }
+
+            .table th:nth-child(5), .table td:nth-child(5) {
+                width: 10%;
+            }
+
+            .table th:nth-child(6), .table td:nth-child(6) {
+                width: 10%;
+            }
+
+            .table th:nth-child(7), .table td:nth-child(7) {
+                width: 20%;
+            }
+    </style>
+</head>
+
+<script>
+         $(document).ready(function () {
+        let ordersData = []; 
+
+        function loadOrders(date = '') {
+            $.ajax({
+                url: '@Url.Action("GetOrders", "Admin")',
+                type: 'GET',
+                data: { selectedDate: date },
+                dataType: 'json',
+                success: function (data) {
+                    ordersData = data;
+                    filterOrders(); 
+                },
+                error: function (xhr) {
+                    alert("Failed to load orders: " + xhr.responseText);
+                }
+            });
+        }
+
+        function filterOrders() {
+            let filteredData = [...ordersData];
+
+            if ($('#filterIsRushed').prop('checked')) {
+                filteredData.sort((a, b) => (a.isRushed === "Yes" ? -1 : 1));
+            }
+
+            if ($('#filterOrderStatus').prop('checked')) {
+                filteredData = filteredData.filter(order => order.paymentStatus === "Paid");
+            }
+
+            if ($('#filterPending').prop('checked')) {
+                filteredData = filteredData.filter(order => order.orderStatus === "Washing");
+            }
+
+            if ($('#filterCanceled').prop('checked')) {
+                filteredData = filteredData.filter(order => order.orderStatus === "Canceled");
+            }
+
+            renderOrders(filteredData);
+        }
+
+            function renderOrders(data) {
+        var orderTable = $("#orderTable tbody");
+        orderTable.empty();
+
+        if (data.length > 0) {
+            $.each(data, function (index, order) {
+                var statusButton;
+                if (order.orderStatus === "Canceled") {
+                    statusButton = `<button class="btn btn-secondary btn-sm w-100" disabled>Cancelled</button>`;
+                } else {
+                    statusButton = `<button class="btn btn-${order.orderStatus === 'Washing' ? 'warning' : 'success'} btn-sm w-100 change-status" data-order-id="${order.orderID}" style="width:100%">${order.orderStatus}</button>`;
+                }
+
+                var paymentBadgeClass = order.paymentStatus === 'Paid' ? 'success' : 'warning';
+                var paymentStatus = `<span class="badge badge-${paymentBadgeClass}">${order.paymentStatus}</span>`;
+
+                var row = `<tr>
+                    <td>${order.orderID}</td>
+                    <td>${order.customerID}</td>
+                    <td>${new Date(order.dateReceived).toLocaleString()}</td>
+                    <td>${new Date(order.datePickup).toLocaleString()}</td>
+                    <td>${order.isRushed}</td>
+                    <td>${typeof order.totalAmount === 'number' ? order.totalAmount.toFixed(2) : 'N/A'}</td>
+                    <td>${typeof order.quantity === 'number' ? order.quantity.toFixed(2) : 'N/A'}</td>
+                    <td>${statusButton}</td>
+                    <td>${paymentStatus}</td>
+                    <td><button class="btn btn-danger btn-sm w-100" onclick="deleteOrder('${order.orderID}')">Delete</button></td>
+                </tr>`;
+
+                orderTable.append(row);
+            });
+        } else {
+            orderTable.append('<tr><td colspan="10" class="text-center">No orders found.</td></tr>');
+        }
+    }
+
+
+        window.deleteOrder = function (orderId) {
+            if (confirm("Are you sure you want to delete this order?")) {
+                $.ajax({
+                    url: '@Url.Action("DeleteConfirm", "Admin")',
+                    type: 'POST',
+                    data: { id: orderId },
+                    success: function (response) {
+                        if (response.success) {
+                            alert("Order deleted successfully.");
+                            loadOrders();
+                        } else {
+                            alert("Error: " + response.message);
+                        }
+                    },
+                    error: function (xhr) {
+                        console.error("AJAX Error:", xhr.responseText);
+                        alert("Failed to delete order: " + xhr.responseText);
+                    }
+                });
+            }
+        };
+
+    $('#orderDate').on('change', function () {
+        let selectedDate = $(this).val();
+
+        if (selectedDate) {
+            // Convert to Date object
+            let dateGiven = new Date(selectedDate);
+
+            // Add 2 days to get Pickup Date
+            let pickupDate = new Date(dateGiven);
+            pickupDate.setDate(dateGiven.getDate() + 2);
+
+            // Format as YYYY-MM-DD for input fields
+            let formattedPickupDate = pickupDate.toISOString().split('T')[0];
+
+            // Update the pickup date field
+            $('#pickupDate').val(formattedPickupDate);
+        }
+
+        // Reload orders for the selected date
+        loadOrders(selectedDate);
+    });
+
+
+        $('#filterIsRushed, #filterOrderStatus, #filterPending').on('change', function () {
+            filterOrders();
+        });
+
+        // Change order status when button is clicked
+            $(document).on("click", ".change-status", function () {
+        var button = $(this);
+        var orderId = button.data("order-id"); 
+        var currentStatus = button.text().trim();
+
+        // Prevent changing the status if it's "Canceled"
+        if (currentStatus === "Canceled") {
+            alert("This order has been canceled and cannot be modified.");
+            return;
+        }
+
+        var newStatus = currentStatus === "Washing" ? "Ready for Pickup" : "Washing";
+
+        $.ajax({
+            url: '@Url.Action("UpdateOrderStatus", "Admin")',
+            type: 'POST',
+            data: { orderId: orderId, newStatus: newStatus },
+            success: function (response) {
+                if (response.success) {
+                    button.text(response.newStatus)
+                        .removeClass("btn-warning btn-success")
+                        .addClass(response.newStatus === "Washing" ? "btn-warning" : "btn-success");
+                } else {
+                    alert("Error: " + response.message);
+                }
+            },
+            error: function () {
+                alert("Failed to update order status.");
+            }
+        });
+    });
+
+        loadOrders();
+    });
+
+</script>
+
+<body>
+    <div class="container mt-4">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h2 class="mb-0">Manage Orders</h2>
+            </div>
+            <div class="card-body">
+                <label for="orderDate">Orders of date:</label>
+                <input type="date" id="orderDate" class="form-control mb-3" />
+                <div class="mb-3 text-center">
+                    <label class="mr-3"><input type="checkbox" id="filterIsRushed"> Rushed</label>
+                    <label class="mr-3"><input type="checkbox" id="filterOrderStatus"> Paid</label>
+                    <label class="mr-3"><input type="checkbox" id="filterPending"> Washing</label>
+                    <label class="mr-3"><input type="checkbox" id="filterCanceled"> Canceled</label>
+                </div>
+
+
+
+                <div class="table-container">
+                    <table id="orderTable" class="table table-bordered table-striped">
+                        <thead>
+                            <tr>
+                                <th>Order ID</th>
+                                <th>Customer ID</th>
+                                <th>Date Given</th>
+                                <th>Pickup Date</th>
+                                <th>Is Rushed</th>
+                                <th>Total Amount</th>
+                                <th>Quantity</th>
+                                <th>Order Status</th>
+                                <th>Payment Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>

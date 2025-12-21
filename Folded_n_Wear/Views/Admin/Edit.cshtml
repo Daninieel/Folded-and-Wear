@@ -1,0 +1,40 @@
+﻿@model Folded_n_Wear.Models.AdminData
+
+
+@{
+    ViewData["Title"] = "Edit Customer";
+}
+
+<head>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
+</head>
+
+<div class="row" style="color:white">
+    <div class="col-md-8 mx-auto rounded border-bottom p-3">
+        <h2 class="text-center mb-5">Edit Customer</h2>
+
+        <form asp-controller="Account" asp-action="Update" method="post">
+            <input type="hidden" name="customerID" value="@Model.customerID" />
+
+            <label>Email:</label>
+            <input type="email" name="email" value="@Model.email" readonly />
+
+            <label>Name:</label>
+            <input type="text" name="custName" value="@Model.custName" required />
+
+            <label>Contact:</label>
+            <input type="text" name="contactNo" value="@Model.contactNo" required />
+
+            <label>Address:</label>
+            <input type="text" name="address" value="@Model.address" required />
+
+          
+
+            <label>Role:</label>
+            <input type="text" name="role" value="@Model.role" required />
+
+            <button type="submit">Save</button>
+        </form>
+
+    </div>
+</div>
