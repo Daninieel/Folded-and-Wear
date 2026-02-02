@@ -97,4 +97,3 @@ Navigate to `https://localhost:7154` (or the port specified in your launch setti
 
 ---
 
-*Made with ❤️ and clean clothes by [Your Name]*
